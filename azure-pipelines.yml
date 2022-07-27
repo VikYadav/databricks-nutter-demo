@@ -1,3 +1,4 @@
+#tested it on my azure devops setup
 # Grab variables from the specific variable group and
 # determine sourceBranchName (avoids SourchBranchName=merge
 # for PR)
