@@ -98,7 +98,7 @@ stages:
 
 - stage: onRelease
   condition: |
-    eq(variables['Build.SourceBranch'], 'refs/heads/new_feature')
+    eq(variables['Build.SourceBranch'], 'refs/heads/master')
   jobs:
   - job: onReleaseJob
     pool:
