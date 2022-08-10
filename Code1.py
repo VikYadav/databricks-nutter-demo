@@ -20,3 +20,6 @@ def upper_columns(df: DataFrame, cols: list) -> DataFrame:
             new_cols.append(F.col(field.name))
             
     return df.select(*new_cols)
+
+
+#this is to test Azure pipeline
