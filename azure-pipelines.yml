@@ -2,6 +2,7 @@
 # Grab variables from the specific variable group and
 # determine sourceBranchName (avoids SourchBranchName=merge
 # for PR)
+#
 variables:
   - group: 'Nutter Testing'
   - name: 'branchName'
