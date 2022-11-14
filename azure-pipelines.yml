@@ -30,110 +30,108 @@ trigger:
 
       
 stages:
-# - stage: onPush
-#   condition: |
-#     and(
-#       ne(variables['Build.SourceBranch'], 'refs/heads/releases'),
-#       not(startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-#     )
-#   jobs:
-#   - job: onPushJob
-#     pool:
-#       vmImage: 'ubuntu-20.04'
-
-#     steps:
-#     - script: env | sort
-#       displayName: 'Environment / Context'
-
-#     - task: UsePythonVersion@0
-#       displayName: 'Use Python 3.8'
-#       inputs:
-#         versionSpec: 3.8
-
-#     - checkout: self
-#       persistCredentials: true
-#       clean: true
-#       displayName: 'Checkout & Build.Reason: $(Build.Reason) & Build.SourceBranchName: $(Build.SourceBranchName)'
-
-#     - script: |
-#         python -m pip install --upgrade pip nutter
-#         # this is because of the old dependency inside Nutter
-#         python -m pip install --upgrade databricks-cli
-#       displayName: 'Install dependencies'
-
-# # https://docs.databricks.com/dev-tools/api/latest/repos.html
-# # this is simplification, and won't work with concurrent commits. Ideally it should be a
-# # separate repo for each commit
-#     - script: |
-#         echo "Checking out the $(branchName) branch"
-#         databricks repos update --path $(STAGING_DIRECTORY) --branch "$(branchName)"
-#       env:
-#         DATABRICKS_HOST: $(DATABRICKS_HOST)
-#         DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
-#       displayName: 'Update Staging project'
-
-#     - script: |
-#         nutter run "$(STAGING_DIRECTORY)/unit-tests/" --cluster_id $(CLUSTER_ID) --recursive --junit_report --timeout 500
-#       env:
-#         DATABRICKS_HOST: $(DATABRICKS_HOST)
-#         DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
-#       displayName: 'Execute Nutter tests'
-
-#     - task: PublishTestResults@2
-#       condition: succeededOrFailed()
-#       inputs:
-#         testResultsFormat: 'JUnit'
-#         testResultsFiles: '**/test-*.xml' 
-#         failTaskOnFailedTests: true
-
-- stage: Build
+- stage: onPush
   condition: |
-    eq(variables['Build.SourceBranch'], 'refs/heads/master')
+   eq(variables['Build.SourceBranch'], 'refs/heads/master')
+   
   jobs:
-  - job: onPush
+  - job: onPushJob
     pool:
       vmImage: 'ubuntu-20.04'
 
     steps:
-      - script: env | sort
-        displayName: 'Environment / Context'
+    - script: env | sort
+      displayName: 'Environment / Context'
 
-      - task: UsePythonVersion@0
-        displayName: 'Use Python 3.8'
-        inputs:
-          versionSpec: 3.8
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.8'
+      inputs:
+        versionSpec: 3.8
 
-      - checkout: self
-        persistCredentials: true
-        clean: true
-        displayName: 'Checkout & Build.Reason: $(Build.Reason) & Build.SourceBranchName: $(Build.SourceBranchName)'
+    - checkout: self
+      persistCredentials: true
+      clean: true
+      displayName: 'Checkout & Build.Reason: $(Build.Reason) & Build.SourceBranchName: $(Build.SourceBranchName)'
 
-      - script: |
-          python -m pip install --upgrade pip nutter
-          # this is because of the old dependency inside Nutter
-          python -m pip install --upgrade databricks-cli
-        displayName: 'Install dependencies'
+    - script: |
+        python -m pip install --upgrade pip nutter
+        # this is because of the old dependency inside Nutter
+        python -m pip install --upgrade databricks-cli
+      displayName: 'Install dependencies'
 
-      - script: |
-          echo "Checking out the releases branch"
-          databricks repos update --path $(STAGING_DIRECTORY) --branch "$(Build.SourceBranchName)"
-        env:
-          DATABRICKS_HOST: $(DATABRICKS_HOST)
-          DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
-        displayName: 'Update Staging repository'
+# https://docs.databricks.com/dev-tools/api/latest/repos.html
+# this is simplification, and won't work with concurrent commits. Ideally it should be a
+# separate repo for each commit
+    - script: |
+        echo "Checking out the $(branchName) branch"
+        databricks repos update --path $(STAGING_DIRECTORY) --branch "$(branchName)"
+      env:
+        DATABRICKS_HOST: $(DATABRICKS_HOST)
+        DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+      displayName: 'Update Staging project'
 
-# We can do a separate set of the tests for release branches
-      - script: |
-          nutter run "$(STAGING_DIRECTORY)/unit-tests" --cluster_id $(CLUSTER_ID) --recursive --junit_report --timeout 500
-        env:
-          DATABRICKS_HOST: $(DATABRICKS_HOST)
-          DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
-        displayName: 'Execute Nutter tests on release'
+    - script: |
+        nutter run "$(STAGING_DIRECTORY)/unit-tests/" --cluster_id $(CLUSTER_ID) --recursive --junit_report --timeout 500
+      env:
+        DATABRICKS_HOST: $(DATABRICKS_HOST)
+        DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+      displayName: 'Execute Nutter tests'
 
-      - task: PublishTestResults@2
-        condition: succeededOrFailed()
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/test-*.xml' 
-          failTaskOnFailedTests: true
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/test-*.xml' 
+        failTaskOnFailedTests: true
+
+# - stage: onRelease
+#   condition: |
+#     eq(variables['Build.SourceBranch'], 'refs/heads/master')
+#   jobs:
+#   - job: onReleaseJob
+#     pool:
+#       vmImage: 'ubuntu-20.04'
+
+#     steps:
+#       - script: env | sort
+#         displayName: 'Environment / Context'
+
+#       - task: UsePythonVersion@0
+#         displayName: 'Use Python 3.8'
+#         inputs:
+#           versionSpec: 3.8
+
+#       - checkout: self
+#         persistCredentials: true
+#         clean: true
+#         displayName: 'Checkout & Build.Reason: $(Build.Reason) & Build.SourceBranchName: $(Build.SourceBranchName)'
+
+#       - script: |
+#           python -m pip install --upgrade pip nutter
+#           # this is because of the old dependency inside Nutter
+#           python -m pip install --upgrade databricks-cli
+#         displayName: 'Install dependencies'
+
+#       - script: |
+#           echo "Checking out the releases branch"
+#           databricks repos update --path $(STAGING_DIRECTORY) --branch "$(Build.SourceBranchName)"
+#         env:
+#           DATABRICKS_HOST: $(DATABRICKS_HOST)
+#           DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+#         displayName: 'Update Staging repository'
+
+# # We can do a separate set of the tests for release branches
+#       - script: |
+#           nutter run "$(STAGING_DIRECTORY)/unit-tests" --cluster_id $(CLUSTER_ID) --recursive --junit_report --timeout 500
+#         env:
+#           DATABRICKS_HOST: $(DATABRICKS_HOST)
+#           DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+#         displayName: 'Execute Nutter tests on release'
+
+#       - task: PublishTestResults@2
+#         condition: succeededOrFailed()
+#         inputs:
+#           testResultsFormat: 'JUnit'
+#           testResultsFiles: '**/test-*.xml' 
+#           failTaskOnFailedTests: true
 
