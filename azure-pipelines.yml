@@ -15,7 +15,7 @@ trigger:
   batch: true
   branches:
     include:
-    - '*'
+    - 'master' 
   paths:
     exclude:
       - README.md
@@ -29,79 +29,69 @@ trigger:
 #      - v*.*
 #      - prod
 
-# This need an additional debugging
-# pr:
-#   branches:
-#     include:
-#       - master
-#       - releases
-#   paths:
-#     exclude:
-#       - README.md
-#       - images
       
 stages:
-- stage: onPush
-  condition: |
-    and(
-      ne(variables['Build.SourceBranch'], 'refs/heads/releases'),
-      not(startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-    )
-  jobs:
-  - job: onPushJob
-    pool:
-      vmImage: 'ubuntu-20.04'
+# - stage: onPush
+#   condition: |
+#     and(
+#       ne(variables['Build.SourceBranch'], 'refs/heads/releases'),
+#       not(startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+#     )
+#   jobs:
+#   - job: onPushJob
+#     pool:
+#       vmImage: 'ubuntu-20.04'
 
-    steps:
-    - script: env | sort
-      displayName: 'Environment / Context'
+#     steps:
+#     - script: env | sort
+#       displayName: 'Environment / Context'
 
-    - task: UsePythonVersion@0
-      displayName: 'Use Python 3.8'
-      inputs:
-        versionSpec: 3.8
+#     - task: UsePythonVersion@0
+#       displayName: 'Use Python 3.8'
+#       inputs:
+#         versionSpec: 3.8
 
-    - checkout: self
-      persistCredentials: true
-      clean: true
-      displayName: 'Checkout & Build.Reason: $(Build.Reason) & Build.SourceBranchName: $(Build.SourceBranchName)'
+#     - checkout: self
+#       persistCredentials: true
+#       clean: true
+#       displayName: 'Checkout & Build.Reason: $(Build.Reason) & Build.SourceBranchName: $(Build.SourceBranchName)'
 
-    - script: |
-        python -m pip install --upgrade pip nutter
-        # this is because of the old dependency inside Nutter
-        python -m pip install --upgrade databricks-cli
-      displayName: 'Install dependencies'
+#     - script: |
+#         python -m pip install --upgrade pip nutter
+#         # this is because of the old dependency inside Nutter
+#         python -m pip install --upgrade databricks-cli
+#       displayName: 'Install dependencies'
 
-# https://docs.databricks.com/dev-tools/api/latest/repos.html
-# this is simplification, and won't work with concurrent commits. Ideally it should be a
-# separate repo for each commit
-    - script: |
-        echo "Checking out the $(branchName) branch"
-        databricks repos update --path $(STAGING_DIRECTORY) --branch "$(branchName)"
-      env:
-        DATABRICKS_HOST: $(DATABRICKS_HOST)
-        DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
-      displayName: 'Update Staging project'
+# # https://docs.databricks.com/dev-tools/api/latest/repos.html
+# # this is simplification, and won't work with concurrent commits. Ideally it should be a
+# # separate repo for each commit
+#     - script: |
+#         echo "Checking out the $(branchName) branch"
+#         databricks repos update --path $(STAGING_DIRECTORY) --branch "$(branchName)"
+#       env:
+#         DATABRICKS_HOST: $(DATABRICKS_HOST)
+#         DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+#       displayName: 'Update Staging project'
 
-    - script: |
-        nutter run "$(STAGING_DIRECTORY)/unit-tests/" --cluster_id $(CLUSTER_ID) --recursive --junit_report --timeout 500
-      env:
-        DATABRICKS_HOST: $(DATABRICKS_HOST)
-        DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
-      displayName: 'Execute Nutter tests'
+#     - script: |
+#         nutter run "$(STAGING_DIRECTORY)/unit-tests/" --cluster_id $(CLUSTER_ID) --recursive --junit_report --timeout 500
+#       env:
+#         DATABRICKS_HOST: $(DATABRICKS_HOST)
+#         DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+#       displayName: 'Execute Nutter tests'
 
-    - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-        testResultsFormat: 'JUnit'
-        testResultsFiles: '**/test-*.xml' 
-        failTaskOnFailedTests: true
+#     - task: PublishTestResults@2
+#       condition: succeededOrFailed()
+#       inputs:
+#         testResultsFormat: 'JUnit'
+#         testResultsFiles: '**/test-*.xml' 
+#         failTaskOnFailedTests: true
 
-- stage: onRelease
+- stage: Build
   condition: |
     eq(variables['Build.SourceBranch'], 'refs/heads/master')
   jobs:
-  - job: onReleaseJob
+  - job: onPush
     pool:
       vmImage: 'ubuntu-20.04'
 
