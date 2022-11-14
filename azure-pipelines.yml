@@ -11,8 +11,10 @@ variables:
       value: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
 
 trigger:
-    - 'refs/heads/master'
-    
+  batch: true
+  branches:
+    include:
+    - 'master' 
   paths:
     exclude:
       - README.md
