@@ -2,7 +2,7 @@
 # Grab variables from the specific variable group and
 # determine sourceBranchName (avoids SourchBranchName=merge
 # for PR)
-#
+
 variables:
   - group: 'Nutter Testing'
   - name: 'branchName'
@@ -11,8 +11,7 @@ variables:
     ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}:
       value: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
 
-trigger:
-  batch: true
+pr:
   branches:
     include:
     - 'master' 
@@ -31,10 +30,11 @@ trigger:
 
       
 stages:
-- stage: onPush
+- stage: Build
+  displayName: 'Build & Test stage'
   condition: |
    eq(variables['Build.SourceBranch'], 'refs/heads/master')
-   
+
   jobs:
   - job: onPushJob
     pool:
