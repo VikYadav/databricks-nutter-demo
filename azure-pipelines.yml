@@ -11,7 +11,8 @@ variables:
     ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}:
       value: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
 
-pr:
+trigger:
+  batch: true
   branches:
     include:
     - 'master' 
